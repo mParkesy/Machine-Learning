@@ -6,6 +6,7 @@
 package labsheet1;
 
 import java.io.FileReader;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.logging.Level;
@@ -26,8 +27,10 @@ public class Labsheet1 {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        Instances train = loadData("C:/Users/Parkesy/Documents/NetBeansProjects/Machine-Learning/Labsheet1/Arsenal_TRAIN.arff");
-        Instances test = loadData("C:/Users/Parkesy/Documents/NetBeansProjects/Machine-Learning/Labsheet1/Arsenal_TEST.arff");
+        //Instances train = loadData("C:/Users/mattp/Documents/NetBeansProjects/Machine-Learning/Labsheet1/Arsenal_TRAIN.arff");
+        //Instances test = loadData("C:/Users/mattp/Documents/NetBeansProjects/Machine-Learning/Labsheet1/Arsenal_TEST.arff");
+        Instances train = loadData("E:/Documents/NetBeansProjects/Machine Learning/Labsheet1/Arsenal_TRAIN.arff");
+        Instances test = loadData("E:/Documents/NetBeansProjects/Machine Learning/Labsheet1/Arsenal_TEST.arff");
         System.out.println("Number of instances in training data: " + train.numInstances());
         System.out.println("Number attributes in test data: " + test.numAttributes());
         
@@ -52,8 +55,10 @@ public class Labsheet1 {
         System.out.println("");
         System.out.println(toString(test));
         
-        train = loadData("C:/Users/Parkesy/Documents/NetBeansProjects/Machine-Learning/Labsheet1/Arsenal_TRAIN.arff");
-        test = loadData("C:/Users/Parkesy/Documents/NetBeansProjects/Machine-Learning/Labsheet1/Arsenal_TEST.arff");
+        //train = loadData("C:/Users/mattp/Documents/NetBeansProjects/Machine-Learning/Labsheet1/Arsenal_TRAIN.arff");
+        //test = loadData("C:/Users/mattp/Documents/NetBeansProjects/Machine-Learning/Labsheet1/Arsenal_TEST.arff");
+        train = loadData("E:/Documents/NetBeansProjects/Machine Learning/Labsheet1/Arsenal_TRAIN.arff");
+        test = loadData("E:/Documents/NetBeansProjects/Machine Learning/Labsheet1/Arsenal_TEST.arff");
         train.setClassIndex(train.numAttributes()-1);
         test.setClassIndex(train.numAttributes()-1);
         
@@ -145,14 +150,22 @@ public class Labsheet1 {
         for(Instance i: data){
             System.out.println("");
             try {
-                System.out.print(Arrays.toString(naive.distributionForInstance(i)));
+                printDoubleArray(naive.distributionForInstance(i));
                 System.out.print("     ");
-                System.out.print(Arrays.toString(neigh.distributionForInstance(i)));
+                printDoubleArray(neigh.distributionForInstance(i));
+                System.out.print("     ");
             } catch (Exception ex) {
                 System.out.println(ex);
             }
         }
     }
+    
+    public static void printDoubleArray(double[] data){
+        DecimalFormat df = new DecimalFormat("0.00");
+        for(double d: data){
+            System.out.print(df.format(d)+ ",");
+        }
+    } 
 }
 
 /*
