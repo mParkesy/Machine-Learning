@@ -28,14 +28,12 @@ public class HistogramClassifier implements Classifier{
         this.position = p;
     }
     
-    
-    
-    
-    
     @Override
     public void buildClassifier(Instances i) throws Exception {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
+        int y = i.numClasses();
+        
+         
+    } 
 
     @Override
     public double classifyInstance(Instance instnc) throws Exception {

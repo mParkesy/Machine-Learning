@@ -61,6 +61,7 @@ public class Labsheet1 {
         test = loadData("E:/Documents/NetBeansProjects/Machine Learning/Labsheet1/Arsenal_TEST.arff");
         train.setClassIndex(train.numAttributes()-1);
         test.setClassIndex(train.numAttributes()-1);
+        System.out.println("Class: " + train.numClasses());
         
         
         System.out.println("Building classifiers...");
@@ -74,6 +75,11 @@ public class Labsheet1 {
         getDistribtuion(bayes, neighbour, test);
     }
     
+    /**
+     * Load instances objects from data file
+     * @param path The path for the data file
+     * @return The instances object
+     */
     public static Instances loadData(String path){
         Instances train;
         try{
@@ -86,6 +92,11 @@ public class Labsheet1 {
         return train;
     }
     
+    /**
+     * Sums up the number of wins in the training data
+     * @param train The training data instance
+     * @return An integer corresponding to the number of wins
+     */
     public static int trainingWins(Instances train){
         int counter = 0;
         train.setClassIndex(3);
@@ -97,13 +108,24 @@ public class Labsheet1 {
         return counter;
     }
     
+    /**
+     * Gets the fifth piece of instance in the test data
+     * @param test The test data instances
+     * @return The fifth instance returned as a double array
+     */
     public static double[] fifthTestData(Instances test){
         return test.get(4).toDoubleArray();
     }
     
+    /**
+     * A to string method for a object of instances
+     * @param data The instances object
+     * @return The instances as a string
+     */
     public static String toString(Instances data){
         return data.toString();
     }
+    
     
     public static Instances deleteAttribute(Instances data, int x){
         data.deleteAttributeAt(x);
@@ -167,25 +189,3 @@ public class Labsheet1 {
         }
     } 
 }
-
-/*
-        Classifier bayes = buildNaive(train);
-        Classifier neighbour = buildNeighbour(train);
-
-        int counter = 0;
-        for(Instance i: test){
-            try {
-                double value = bayes.classifyInstance(i);
-                System.out.println("Predicted value: " + value);
-                if(i.classValue() == value){
-                    counter++;
-                }
-            } catch (Exception ex) {
-                System.out.println(ex);
-            }
-            
-        }
-        
-        System.out.println("Classifier accuracey is: "+ a +"%");
-
-*/
