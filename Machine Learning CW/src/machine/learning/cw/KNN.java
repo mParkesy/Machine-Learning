@@ -7,6 +7,8 @@ package machine.learning.cw;
 
 
 
+import evaluation.evaluators.SingleTestSetEvaluator;
+import evaluation.storage.ClassifierResults;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
@@ -295,8 +297,8 @@ public class KNN extends AbstractClassifier {
         System.out.println(getAccuracey(test, classifier)); 
         
         
-        
-        res = st.evaluate(classifier, test);
+        SingleTestSetEvaluator st = new SingleTestSetEvaluator();
+        ClassifierResults res = st.evaluate(classifier, test);
         System.out.println(res.getAcc());
         
         
