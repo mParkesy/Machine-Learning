@@ -32,9 +32,16 @@ public class KNN extends AbstractClassifier {
     private int k = 1;
     private boolean flag = true;
     private boolean leave = false;
+    private boolean voting = false;
     
     public KNN() {
 
+    }
+    
+    public KNN(boolean flag, boolean leave, boolean voting){
+        this.flag = flag;
+        this.leave = leave;
+        this.voting = voting;
     }
 
     public Instances getData() {
@@ -59,6 +66,10 @@ public class KNN extends AbstractClassifier {
 
     public void setLeave(boolean leave) {
         this.leave = leave;
+    }
+    
+    public void setVoting(boolean vote) {
+        this.voting = vote;
     }
     
     @Override
@@ -267,7 +278,8 @@ public class KNN extends AbstractClassifier {
         
         //Instances train = MachineLearningCW.loadData("U:/Documents/NetBeansProjects/Machine Learning CW/blood/blood_TRAIN.arff");
         //Instances test = MachineLearningCW.loadData("U:/Documents/NetBeansProjects/Machine Learning CW/blood/blood_TEST.arff");
-        Instances all = MachineLearningCW.loadData("U:/Documents/NetBeansProjects/Machine Learning CW/blood/blood.arff");
+        //Instances all = MachineLearningCW.loadData("U:/Documents/NetBeansProjects/Machine Learning CW/blood/blood.arff");
+        Instances all = MachineLearningCW.loadData("E:/Documents/NetBeansProjects/Machine Learning/Machine Learning CW/blood/blood.arff");
         //train.setClassIndex(4);
         //test.setClassIndex(4);
         
