@@ -6,6 +6,11 @@
 package machine.learning.cw;
 
 
+import evaluation.evaluators.SingleTestSetEvaluator;
+import evaluation.storage.ClassifierResults;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -16,6 +21,7 @@ import java.util.TreeMap;
 import weka.classifiers.AbstractClassifier;
 import weka.core.Instance;
 import weka.core.Instances;
+
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -30,18 +36,18 @@ import weka.core.Instances;
 public class KNN extends AbstractClassifier {
     private Instances data = null;
     private int k = 1;
-    private boolean flag = true;
+    private boolean standardisation = true;
     private boolean leave = false;
-    private boolean voting = false;
+    private boolean weighted = false;
     
     public KNN() {
 
     }
     
     public KNN(boolean flag, boolean leave, boolean voting){
-        this.flag = flag;
+        this.standardisation = flag;
         this.leave = leave;
-        this.voting = voting;
+        this.weighted = voting;
     }
 
     public Instances getData() {
@@ -60,16 +66,16 @@ public class KNN extends AbstractClassifier {
         this.k = k;
     }
 
-    public void setFlag(boolean flag) {
-        this.flag = flag;
+    public void setStandardisation(boolean flag) {
+        this.standardisation = flag;
     }
 
     public void setLeave(boolean leave) {
         this.leave = leave;
     }
     
-    public void setVoting(boolean vote) {
-        this.voting = vote;
+    public void setWeighting(boolean vote) {
+        this.weighted = vote;
     }
     
     @Override
@@ -80,8 +86,8 @@ public class KNN extends AbstractClassifier {
             // k needs to be set
             int initialK = (int) Math.rint(i.numInstances() * 0.2);
             int maxK = Math.min(100, initialK);
-            Instances train = MachineLearningCW.loadData("U:/Documents/NetBeansProjects/Machine Learning CW/blood/blood_TRAIN.arff");
-            Instances test = MachineLearningCW.loadData("U:/Documents/NetBeansProjects/Machine Learning CW/blood/blood_TEST.arff");
+            Instances train = MachineLearningCW.loadData("C:/Users/Parkesy/Documents/NetBeansProjects/Machine-Learning/Machine Learning CW/blood/blood_TRAIN.arff");
+            Instances test = MachineLearningCW.loadData("C:/Users/Parkesy/Documents/NetBeansProjects/Machine-Learning/Machine Learning CW/blood/blood_TEST.arff");
             train.setClassIndex(4);
             test.setClassIndex(4);
             
@@ -89,7 +95,6 @@ public class KNN extends AbstractClassifier {
             for(int n = 1; n <= maxK; n++){
                 KNN classifier = new KNN();
                 classifier.setK(n);
-                System.out.println("K: " + classifier.getK());
                 classifier.setLeave(false);
                 classifier.buildClassifier(train);
                 accuracies[n] = getAccuracey(test, classifier);
@@ -97,26 +102,8 @@ public class KNN extends AbstractClassifier {
             this.k = maxPosInDoubleArray(accuracies);
         }
         
-        if(flag) {
+        if(standardisation) {
             standardiseAttributes(i);
-//            double total = 0.0;
-//            for(int n = 0; n < this.data.numAttributes(); n++){
-//                if(i.classIndex() != n){
-//                    for(Instance x : this.data){
-//                        total += x.value(n);
-//                    }
-//                    double mean = total/this.data.numInstances();
-//                    double sdTotal = 0.0;
-//                    for(Instance x : this.data){
-//                        sdTotal += Math.pow(x.value(n) - mean, 2);
-//                        //x.setValue(n, SampleDeviation(x, mean, this.data.numInstances()));
-//                    }   
-//                    double sd = Math.sqrt(sdTotal / this.data.numInstances());
-//                    for(Instance x : this.data){
-//                        x.setValue(n, ((x.value(n) - mean)/ sd));
-//                    }
-//                }
-//            }
         }
     }
     
@@ -189,8 +176,15 @@ public class KNN extends AbstractClassifier {
         double[] voting = new double[this.data.numClasses()];
         for(Map.Entry<Double, List<Instance>> entry : map.entrySet()) {
             List<Instance> value = entry.getValue();
+            
             for(Instance y : value){
-                voting[(int)y.classValue()]++;
+                if(this.weighted){
+                    double weight = 1 / (1 + entry.getKey());
+                    voting[(int)y.classValue()] = voting[(int)y.classValue()] + weight;
+                } else {
+                    voting[(int)y.classValue()]++;
+                }
+                
             }
             
             //System.out.println(key + " => " + value.toString());
@@ -279,47 +273,62 @@ public class KNN extends AbstractClassifier {
         //Instances train = MachineLearningCW.loadData("U:/Documents/NetBeansProjects/Machine Learning CW/blood/blood_TRAIN.arff");
         //Instances test = MachineLearningCW.loadData("U:/Documents/NetBeansProjects/Machine Learning CW/blood/blood_TEST.arff");
         //Instances all = MachineLearningCW.loadData("U:/Documents/NetBeansProjects/Machine Learning CW/blood/blood.arff");
-        Instances all = MachineLearningCW.loadData("E:/Documents/NetBeansProjects/Machine Learning/Machine Learning CW/blood/blood.arff");
+        //Instances all = MachineLearningCW.loadData("E:/Documents/NetBeansProjects/Machine Learning/Machine Learning CW/blood/blood.arff");
+        //Instances all = MachineLearningCW.loadData("C:/Users/Parkesy/Documents/NetBeansProjects/Machine-Learning/Machine Learning CW/blood/blood.arff");
+        Instances train = MachineLearningCW.loadData("C:/Users/Parkesy/Documents/NetBeansProjects/Machine-Learning/Machine Learning CW/blood/blood_TRAIN.arff");
+        Instances test = MachineLearningCW.loadData("C:/Users/Parkesy/Documents/NetBeansProjects/Machine-Learning/Machine Learning CW/blood/blood_TEST.arff");
         //train.setClassIndex(4);
         //test.setClassIndex(4);
+       
         
-        Instances[] splitAll = splitData(all, 0.7);
-        Instances all_train = splitAll[0];
-        Instances all_test = splitAll[1];
+        train.setClassIndex(4);
+        test.setClassIndex(4);
         
-        all.setClassIndex(4);
         KNN classifier = new KNN();
-        classifier.setK(1);
-        
-        all_train.setClassIndex(all_train.numAttributes()-1);
-        all_test.setClassIndex(all_train.numAttributes()-1);
-        
+        classifier.setK(5);
+
+
         //classifier.buildClassifier(train);
-        classifier.setLeave(false);
-        classifier.setFlag(true);
-        classifier.buildClassifier(all_train);
+        classifier.setLeave(true);
+        classifier.setStandardisation(true);
+        classifier.setWeighting(true);
+        classifier.buildClassifier(train);
+        System.out.println(getAccuracey(test, classifier)); 
         
-        System.out.println(getAccuracey(all_test, classifier));
+        
+        SingleTestSetEvaluator st = new SingleTestSetEvaluator();
+        ClassifierResults res = new ClassifierResults();
+        res = st.evaluate(classifier, test);
+        System.out.println(res.getAcc());
         
         
-//        double count = 0;
-//        double correct = 0;
-//        for(Instance x: all_test){
-//            double result = classifier.classifyInstance(x);
-//            //double[] dis = classifier.distributionForInstance(x);
-////            for(int i = 0; i < dis.length; i++){
-////                System.out.println(dis[i]);
-////            }
+//        try (PrintWriter writer = new PrintWriter(new File("knn.csv"))) {
+//            StringBuilder sb = new StringBuilder();
+//            sb.append("k,");
+//            sb.append("accuracey\n");
 //            
-//            double actual = x.classValue();
-//            if(result == actual){
-//                correct++;
-//            }            
-//            count++;
-//            //System.out.println("Distribtuin: " + Arrays.toString(classifier.distributionForInstance(x)));
+//            for(int i = 0; i < 10; i++){
+//                KNN classifier = new KNN();
+//                classifier.setK(i+1);
+//
+//
+//                //classifier.buildClassifier(train);
+//                classifier.setLeave(false);
+//                classifier.setStandardisation(false);
+//                classifier.setWeighting(false);
+//                classifier.buildClassifier(train);
+//
+//                sb.append(i+1);
+//                sb.append(",");
+//                sb.append(getAccuracey(test, classifier));
+//                sb.append("\n");
+//                
+//                System.out.println(getAccuracey(test, classifier));    
+//            }
+//            writer.write(sb.toString());
+//        } catch (FileNotFoundException e) {
+//            System.out.println(e.getMessage());
 //        }
-//        System.out.println("Accuracey: " + (correct/count)*100);
-        
         
     }    
 }

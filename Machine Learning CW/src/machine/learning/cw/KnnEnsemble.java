@@ -5,10 +5,15 @@
  */
 package machine.learning.cw;
 
+import evaluation.evaluators.SingleTestSetEvaluator;
+import evaluation.storage.ClassifierResults;
+import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import static machine.learning.cw.KNN.getAccuracey;
 import static machine.learning.cw.KNN.splitData;
+import weka.core.Instance;
 import weka.core.Instances;
 
 /**
@@ -18,34 +23,38 @@ import weka.core.Instances;
 public class KnnEnsemble {
     private int size = 50;
     private KNN[] list = new KNN[size];
+    private Instances trainData;
+    private Random rand = new Random();
     
-    public void startEnsemble() throws Exception{
-        // load in all data
-        Instances all = MachineLearningCW.loadData("E:/Documents/NetBeansProjects/Machine Learning/Machine Learning CW/blood/blood.arff");
-        // loop over array of classifiers
+    
+    public void buildEnsemble(Instances train) throws Exception{
+        this.trainData = train;
         for(int i = 0; i < this.size; i++){
-            // initialize a new KNN
             list[i] = new KNN();
-            // split the data into training and test data
-            Instances[] splitAll = splitData(all, myRandom(0.6, 0.8));
-            Instances all_train = splitAll[0];
-            Instances all_test = splitAll[1];
+            Instances subset = new Instances(train, 0);
+            for(int j = 0; j < 100; j++){
+                Instance get = train.get(rand.nextInt((train.size()-1 - 0) + 1) + 0);
+                subset.add(get);    
+            }
             
-            // set the class index
-            all.setClassIndex(4);
-            all_train.setClassIndex(all_train.numAttributes()-1);
-            all_test.setClassIndex(all_train.numAttributes()-1);
-            
-            // set flags
             list[i].setLeave(false);
-            list[i].setFlag(false);
-            list[i].setVoting(false);
-            list[i].buildClassifier(all_train);
-            
-            // get accuracey of classifier
-            System.out.println(getAccuracey(all_test, list[i]));
+            list[i].setStandardisation(false);
+            list[i].setWeighting(false);
+            list[i].buildClassifier(subset);
         }
     }
+    
+    public void runEnsemble(Instances test) throws Exception{        
+        double fullAvg = 0.0;
+        for(int i = 0; i < this.size; i++){
+            
+            fullAvg = fullAvg + getAccuracey(test, list[i]);   
+            //System.out.println("NN " + i + " : " + avg);
+        }
+        fullAvg = fullAvg / this.size;
+        System.out.println("Overall average: " + fullAvg);
+    }
+   
     
     /**
      * Gets a random double between two values
@@ -53,16 +62,50 @@ public class KnnEnsemble {
      * @param max The max value
      * @return A value between min and max
      */
-    double myRandom(double min, double max) {
+    double randomDouble(double min, double max) {
         Random r = new Random();
         return (r.nextInt((int)((max-min)*10+1))+min*10) / 10.0;
     }
+
+public static List<String> getFileNames(final File folder) {
+    List<String> fileList = new ArrayList<>();
+    for (final File fileEntry : folder.listFiles()) {
+        if (fileEntry.isDirectory()) {
+            for(final File d : fileEntry.listFiles()){
+                if((!d.getName().contains("_TRAIN")) && (!d.getName().contains("_TEST"))){
+                  fileList.add(d.getPath());
+                }
+            }
+        }
+    }
+    return fileList;
+}
     
     public static void main(String[] args) throws Exception {
-        KnnEnsemble test = new KnnEnsemble();
-        test.startEnsemble();
+        final File folder = new File("C:/Users/Parkesy/Documents/NetBeansProjects/Machine-Learning/Machine Learning CW/datasets/");
+        List<String> fileList = getFileNames(folder);
         
+        for(String path : fileList){
+            
+            KnnEnsemble ensemble = new KnnEnsemble();
+            Instances all = MachineLearningCW.loadData(path);
+            Instances split[] = splitData(all, 0.7);
+            Instances train = split[0];
+            Instances test = split[1];
+            train.setClassIndex(train.numAttributes()-1);
+            test.setClassIndex(test.numAttributes()-1);
+            ensemble.buildEnsemble(train);
+            ensemble.runEnsemble(test);            
+        }
+        
+//        KnnEnsemble ensemble = new KnnEnsemble();
+//        Instances train = MachineLearningCW.loadData("C:/Users/Parkesy/Documents/NetBeansProjects/Machine-Learning/Machine Learning CW/blood/blood_TRAIN.arff");
+//        Instances test = MachineLearningCW.loadData("C:/Users/Parkesy/Documents/NetBeansProjects/Machine-Learning/Machine Learning CW/blood/blood_TEST.arff");
+//        ensemble.buildEnsemble(train);
+//        ensemble.runEnsemble(test);
     }
+    
+    
 }
 
 
@@ -83,7 +126,7 @@ public class KnnEnsemble {
 //
 ////classifier.buildClassifier(train);
 //classifier.setLeave(false);
-//classifier.setFlag(true);
+//classifier.setStandardisation(true);
 //classifier.buildClassifier(all_train);
 //
 //System.out.println(getAccuracey(all_test, classifier));
