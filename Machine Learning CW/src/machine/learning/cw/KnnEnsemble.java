@@ -7,7 +7,13 @@ package machine.learning.cw;
 
 
 
+import evaluation.evaluators.SingleTestSetEvaluator;
+import evaluation.storage.ClassifierResults;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -27,7 +33,7 @@ public class KnnEnsemble {
     private Random rand = new Random();
     
     
-    public void buildEnsemble(Instances train) throws Exception{
+    public void buildEnsemble(Instances train, boolean[] arr) throws Exception{
         this.trainData = train;
         for(int i = 0; i < this.size; i++){
             list[i] = new KNN();
@@ -37,22 +43,53 @@ public class KnnEnsemble {
                 subset.add(get);    
             }
             
-            list[i].setLeave(false);
-            list[i].setStandardisation(false);
-            list[i].setWeighting(false);
+            list[i].setLeave(arr[0]);
+            list[i].setStandardisation(arr[1]);
+            list[i].setWeighting(arr[2]);
             list[i].buildClassifier(subset);
         }
     }
     
-    public void runEnsemble(Instances test) throws Exception{        
-        double fullAvg = 0.0;
+    public void runEnsemble(Instances test, String filename, boolean[] arr) throws Exception{        
+        double[] averages = new double[11];                
         for(int i = 0; i < this.size; i++){
+            //System.out.println("NN " + i + " : " + avg);                
+            SingleTestSetEvaluator st = new SingleTestSetEvaluator();
+            ClassifierResults res = st.evaluate(list[i], test);
             
-            fullAvg = fullAvg + getAccuracey(test, list[i]);   
-            //System.out.println("NN " + i + " : " + avg);
+            averages[0] += res.getAcc();
+            averages[1] += res.balancedAcc;
+            averages[2] += res.f1;
+            averages[3] += res.mcc;
+            averages[4] += res.meanAUROC;
+            averages[5] += res.nll;
+            averages[6] += res.precision;
+            averages[7] += res.recall;
+            averages[8] += res.sensitivity;
+            averages[9] += res.specificity;
+            averages[10] += res.stddev;
         }
-        fullAvg = fullAvg / this.size;
-        System.out.println("Overall average: " + fullAvg);
+        
+        try (PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter("1-NN Improvements.csv", true)))) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(filename);
+            sb.append(",");
+            sb.append(arr[0]);
+            sb.append(",");
+            sb.append(arr[1]);
+            sb.append(",");
+            sb.append(arr[2]);
+            sb.append(",");
+            for(double x : averages){
+               x = x / this.size; 
+               sb.append(x);
+               sb.append(",");      
+            }
+            sb.append("\n"); 
+            writer.write(sb.toString());  
+        } catch (FileNotFoundException e) {
+            System.out.println(e.getMessage());
+        }
     }
    
     
@@ -82,21 +119,59 @@ public static List<String> getFileNames(final File folder) {
 }
     
     public static void main(String[] args) throws Exception {
-        final File folder = new File("C:/Users/Parkesy/Documents/NetBeansProjects/Machine-Learning/Machine Learning CW/datasets/");
+        final File folder = new File("E:/Documents/NetBeansProjects/Machine Learning/Machine Learning CW/datasets/");
         List<String> fileList = getFileNames(folder);
         
-        for(String path : fileList){
+        try (PrintWriter writer = new PrintWriter(new File("1-NN Improvements.csv"))){
+            StringBuilder sb = new StringBuilder();
+            sb.append("dataset,");
+            sb.append("leave,");
+            sb.append("standardisation,");
+            sb.append("weighting,");
+            sb.append("accuracey,");
+            sb.append("balancedAcc,");
+            sb.append("f1,");
+            sb.append("mcc,");
+            sb.append("meanAUROC,");
+            sb.append("n11,");
+            sb.append("precision,");
+            sb.append("recall,");
+            sb.append("sensitivity,");
+            sb.append("specificity,");
+            sb.append("stddev\n");    
+            writer.write(sb.toString());  
+        } catch (FileNotFoundException e) {
+            System.out.println(e.getMessage());
+        }
+        
+        boolean[][] arr = new boolean[][]{
+            {false, false, false},
+            {true, false, false},
+            {false, true, false},
+            {false, false, true},
+            {true, true, true},
+            {false, true, true},
+            {true, true, false},
+            {true, false, true},
+        };
+        
+        for(int y = 0; y < arr.length; y++){
+            for(String path : fileList){
             
-            KnnEnsemble ensemble = new KnnEnsemble();
             Instances all = MachineLearningCW.loadData(path);
+            KnnEnsemble ensemble = new KnnEnsemble();
             Instances split[] = splitData(all, 0.7);
             Instances train = split[0];
             Instances test = split[1];
             train.setClassIndex(train.numAttributes()-1);
             test.setClassIndex(test.numAttributes()-1);
-            ensemble.buildEnsemble(train);
-            ensemble.runEnsemble(test);            
+            ensemble.buildEnsemble(train, arr[y]);
+            String filename = path.substring(path.lastIndexOf("\\")+1, path.indexOf(".")); 
+            ensemble.runEnsemble(test, filename, arr[y]);  
+            
         }
+        }
+        
         
 //        KnnEnsemble ensemble = new KnnEnsemble();
 //        Instances train = MachineLearningCW.loadData("C:/Users/Parkesy/Documents/NetBeansProjects/Machine-Learning/Machine Learning CW/blood/blood_TRAIN.arff");

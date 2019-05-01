@@ -7,6 +7,7 @@ package machine.learning.cw;
 
 
 
+
 import evaluation.evaluators.SingleTestSetEvaluator;
 import evaluation.storage.ClassifierResults;
 import java.io.File;
@@ -87,31 +88,45 @@ public class KNN extends AbstractClassifier {
             // k needs to be set
             int initialK = (int) Math.rint(i.numInstances() * 0.2);
             int maxK = Math.min(100, initialK);
-            Instances train = MachineLearningCW.loadData("C:/Users/Parkesy/Documents/NetBeansProjects/Machine-Learning/Machine Learning CW/blood/blood_TRAIN.arff");
-            Instances test = MachineLearningCW.loadData("C:/Users/Parkesy/Documents/NetBeansProjects/Machine-Learning/Machine Learning CW/blood/blood_TEST.arff");
-            train.setClassIndex(4);
-            test.setClassIndex(4);
-            
             double[] accuracies = new double[maxK+1];
-            for(int n = 1; n <= maxK; n++){
-                KNN classifier = new KNN();
-                classifier.setK(n);
-                classifier.setLeave(false);
-                classifier.buildClassifier(train);
-                accuracies[n] = getAccuracey(test, classifier);
+            int z = 0;
+            for(Instance x : this.data){
+                Instances train = this.data;
+                Instances test = new Instances(this.data, 0);
+                test.add(train.remove(z));
+                
+                train.setClassIndex(train.numAttributes()-1);
+                test.setClassIndex(test.numAttributes()-1);
+                            
+                for(int n = 1; n <= maxK; n++){
+                    KNN classifier = new KNN();
+                    classifier.setK(n);
+                    classifier.buildClassifier(train);
+                    SingleTestSetEvaluator st = new SingleTestSetEvaluator();
+                    ClassifierResults res = st.evaluate(classifier, test);
+                    accuracies[n] += res.getAcc();
+                    
+                }
+                z++;
             }
+            System.out.println(Arrays.toString(accuracies));
             this.k = maxPosInDoubleArray(accuracies);
+//            Instances[] split = splitData(this.data, 0.01);
+//            Instances train = split[1];           
+//            Instances test = split[0];
+
+            
         }
         
         if(standardisation) {
-            standardiseAttributes(i);
+            standardiseAttributes();
         }
     }
     
-    public void standardiseAttributes(Instances i){
+    public void standardiseAttributes(){
         double total = 0.0;
         for(int n = 0; n < this.data.numAttributes(); n++){
-            if(i.classIndex() != n){
+            if(this.data.classIndex() != n){
                 for(Instance x : this.data){
                     total += x.value(n);
                 }
