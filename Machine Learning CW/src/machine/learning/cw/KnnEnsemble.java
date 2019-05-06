@@ -33,24 +33,24 @@ public class KnnEnsemble {
     private Random rand = new Random();
     
     
-    public void buildEnsemble(Instances train, boolean[] arr) throws Exception{
+    public void buildEnsemble(Instances train) throws Exception{
         this.trainData = train;
         for(int i = 0; i < this.size; i++){
             list[i] = new KNN();
             Instances subset = new Instances(train, 0);
-            for(int j = 0; j < 100; j++){
+            for(int j = 0; j < this.trainData.size(); j++){
                 Instance get = train.get(rand.nextInt((train.size()-1 - 0) + 1) + 0);
                 subset.add(get);    
             }
             
-            list[i].setLeave(arr[0]);
-            list[i].setStandardisation(arr[1]);
-            list[i].setWeighting(arr[2]);
+            list[i].setLeave(false);
+            list[i].setStandardisation(false);
+            list[i].setWeighting(false);
             list[i].buildClassifier(subset);
         }
     }
     
-    public void runEnsemble(Instances test, String filename, boolean[] arr) throws Exception{        
+    public void runEnsemble(Instances test, String filename) throws Exception{        
         double[] averages = new double[11];                
         for(int i = 0; i < this.size; i++){
             //System.out.println("NN " + i + " : " + avg);                
@@ -70,15 +70,11 @@ public class KnnEnsemble {
             averages[10] += res.stddev;
         }
         
-        try (PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter("1-NN Improvements.csv", true)))) {
+        try (PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter("Ensemble vs 1NN.csv", true)))) {
             StringBuilder sb = new StringBuilder();
             sb.append(filename);
             sb.append(",");
-            sb.append(arr[0]);
-            sb.append(",");
-            sb.append(arr[1]);
-            sb.append(",");
-            sb.append(arr[2]);
+            sb.append("ensemble");
             sb.append(",");
             for(double x : averages){
                x = x / this.size; 
@@ -118,59 +114,48 @@ public static List<String> getFileNames(final File folder) {
     return fileList;
 }
     
-    public static void main(String[] args) throws Exception {
-        final File folder = new File("E:/Documents/NetBeansProjects/Machine Learning/Machine Learning CW/datasets/");
-        List<String> fileList = getFileNames(folder);
-        
-        try (PrintWriter writer = new PrintWriter(new File("1-NN Improvements.csv"))){
-            StringBuilder sb = new StringBuilder();
-            sb.append("dataset,");
-            sb.append("leave,");
-            sb.append("standardisation,");
-            sb.append("weighting,");
-            sb.append("accuracey,");
-            sb.append("balancedAcc,");
-            sb.append("f1,");
-            sb.append("mcc,");
-            sb.append("meanAUROC,");
-            sb.append("n11,");
-            sb.append("precision,");
-            sb.append("recall,");
-            sb.append("sensitivity,");
-            sb.append("specificity,");
-            sb.append("stddev\n");    
-            writer.write(sb.toString());  
-        } catch (FileNotFoundException e) {
-            System.out.println(e.getMessage());
-        }
-        
-        boolean[][] arr = new boolean[][]{
-            {false, false, false},
-            {true, false, false},
-            {false, true, false},
-            {false, false, true},
-            {true, true, true},
-            {false, true, true},
-            {true, true, false},
-            {true, false, true},
-        };
-        
-        for(int y = 0; y < arr.length; y++){
-            for(String path : fileList){
-            
-            Instances all = MachineLearningCW.loadData(path);
-            KnnEnsemble ensemble = new KnnEnsemble();
-            Instances split[] = splitData(all, 0.7);
-            Instances train = split[0];
-            Instances test = split[1];
-            train.setClassIndex(train.numAttributes()-1);
-            test.setClassIndex(test.numAttributes()-1);
-            ensemble.buildEnsemble(train, arr[y]);
-            String filename = path.substring(path.lastIndexOf("\\")+1, path.indexOf(".")); 
-            ensemble.runEnsemble(test, filename, arr[y]);  
-            
-        }
-        }
+public static void main(String[] args) throws Exception {
+    final File folder = new File("E:/Documents/NetBeansProjects/Machine Learning/Machine Learning CW/datasets/");
+    List<String> fileList = getFileNames(folder);
+
+    try (PrintWriter writer = new PrintWriter(new File("1-NN Improvements.csv"))){
+        StringBuilder sb = new StringBuilder();
+        sb.append("dataset,");
+        sb.append("leave,");
+        sb.append("standardisation,");
+        sb.append("weighting,");
+        sb.append("accuracey,");
+        sb.append("balancedAcc,");
+        sb.append("f1,");
+        sb.append("mcc,");
+        sb.append("meanAUROC,");
+        sb.append("n11,");
+        sb.append("precision,");
+        sb.append("recall,");
+        sb.append("sensitivity,");
+        sb.append("specificity,");
+        sb.append("stddev\n");    
+        writer.write(sb.toString());  
+    } catch (FileNotFoundException e) {
+        System.out.println(e.getMessage());
+    }
+
+
+    for(String path : fileList){
+
+        Instances all = MachineLearningCW.loadData(path);
+        KnnEnsemble ensemble = new KnnEnsemble();
+        Instances split[] = splitData(all, 0.7);
+        Instances train = split[0];
+        Instances test = split[1];
+        train.setClassIndex(train.numAttributes()-1);
+        test.setClassIndex(test.numAttributes()-1);
+        ensemble.buildEnsemble(train);
+        String filename = path.substring(path.lastIndexOf("\\")+1, path.indexOf(".")); 
+        ensemble.runEnsemble(test, filename);  
+
+    }
+}
         
         
 //        KnnEnsemble ensemble = new KnnEnsemble();
@@ -179,9 +164,7 @@ public static List<String> getFileNames(final File folder) {
 //        ensemble.buildEnsemble(train);
 //        ensemble.runEnsemble(test);
     }
-    
-    
-}
+
 
 
 //Instances all = MachineLearningCW.loadData("E:/Documents/NetBeansProjects/Machine Learning/Machine Learning CW/blood/blood.arff");
